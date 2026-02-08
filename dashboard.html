@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budhale Hall | Admin Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a', 
+                        secondary: '#d97706',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(59, 130, 246, 0.5)'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; }
+        
+        /* Premium Sidebar */
+        .sidebar-premium {
+            background: #FFFFFF;
+            border-right: 1px solid #F1F5F9;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+        }
+
+        /* Nav Items */
+        .nav-link {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            margin-bottom: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-link:hover {
+            background-color: #F8FAFC;
+            color: #1E3A8A;
+            transform: translateX(4px);
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, #1E3A8A 0%, #172554 100%);
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+        }
+        
+        .nav-link.active i { color: #FFFFFF; }
+        .nav-link:hover i { color: #1E3A8A; }
+        .nav-link.active:hover { transform: none; }
+
+        /* Badge Animation */
+        @keyframes pulse-soft {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .badge-pulse { animation: pulse-soft 2s infinite; }
+
+        /* User Profile Card */
+        .user-card {
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            border: 1px solid #E2E8F0;
+            transition: all 0.3s ease;
+        }
+        .user-card:hover {
+            border-color: #CBD5E1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-slate-800 bg-slate-50">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-[280px] sidebar-premium flex-shrink-0 flex flex-col h-full z-30 transition-all duration-300 hidden lg:flex">
+        
+        <!-- Brand Header -->
+        <div class="h-24 flex items-center px-8">
+            <div class="flex items-center gap-3 w-full">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+                    <i class="fas fa-building-columns text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight leading-none">Budhale<span class="text-blue-600">Admin</span></h1>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">Venue Manager</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-1 scroll-smooth">
+            
+            <!-- Group: Overview -->
+            <div class="px-4 mb-2 mt-2">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Overview</p>
+            </div>
+            
+            <a href="#" onclick="showSection('dashboard')" id="nav-dashboard" class="nav-link active flex items-center px-4 py-3.5 text-sm font-semibold text-slate-600">
+                <i class="fas fa-th-large w-5 mr-3 text-slate-400 transition-colors"></i>
+                Dashboard
+            </a>
+            
+            <a href="#" onclick="showSection('bookings')" id="nav-bookings" class="nav-link flex items-center px-4 py-3.5 text-sm font-semibold text-slate-600 group">
+                <i class="fas fa-calendar-check w-5 mr-3 text-slate-400 group-hover:text-blue-600 transition-colors"></i>
+                Bookings
+                <span id="badge-bookings" class="ml-auto bg-blue-100 text-blue-700 py-0.5 px-2.5 rounded-full text-[10px] font-bold badge-pulse hidden">NEW</span>
+            </a>
+
+            <!-- Group: Management -->
+            <div class="px-4 mb-2 mt-8">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Management</p>
+            </div>
+
+            <a href="#" onclick="showSection('halls')" id="nav-halls" class="nav-link flex items-center px-4 py-3.5 text-sm font-semibold text-slate-600 group">
+                <i class="fas fa-hotel w-5 mr-3 text-slate-400 group-hover:text-blue-600 transition-colors"></i>
+                Venues
+            </a>
+
+            <a href="#" onclick="showSection('gallery')" id="nav-gallery" class="nav-link flex items-center px-4 py-3.5 text-sm font-semibold text-slate-600 group">
+                <i class="fas fa-images w-5 mr-3 text-slate-400 group-hover:text-blue-600 transition-colors"></i>
+                Gallery
+            </a>
+
+            <a href="#" onclick="showSection('users')" id="nav-users" class="nav-link flex items-center px-4 py-3.5 text-sm font-semibold text-slate-600 group">
+                <i class="fas fa-users w-5 mr-3 text-slate-400 group-hover:text-blue-600 transition-colors"></i>
+                Customers
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer (Profile) -->
+        <div class="p-4 border-t border-slate-100 bg-white">
+            <div class="user-card rounded-2xl p-3 flex items-center gap-3 cursor-pointer group" onclick="logout()">
+                <div class="relative">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=1e3a8a&color=fff&bold=true" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" alt="Admin">
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-bold text-slate-800 truncate group-hover:text-blue-700 transition-colors">Admin</h4>
+                    <p class="text-[11px] text-slate-500 font-medium truncate">Super Admin</p>
+                </div>
+                <button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                    <i class="fas fa-sign-out-alt text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT (Wrapper) -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative bg-slate-50/50">
+        
+        <!-- Header -->
+        <header class="h-20 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 z-10 sticky top-0 border-b border-slate-100">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-slate-500 hover:text-slate-700"><i class="fas fa-bars text-xl"></i></button>
+                <h2 id="pageTitle" class="text-2xl font-bold text-slate-800">Dashboard</h2>
+            </div>
+            
+            <div class="flex items-center gap-5">
+                <button onclick="generateFakeData()" class="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors">
+                    <i class="fas fa-magic"></i> Seed Data
+                </button>
+                <div class="h-8 w-[1px] bg-slate-200 mx-1"></div>
+                <button class="relative w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 shadow-sm transition-all hover:shadow-md">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute top-2.5 right-3 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Body -->
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10 scroll-smooth">
+            
+            <!-- SECTION: DASHBOARD -->
+            <div id="dashboard" class="section space-y-8 animate-fade-in-up">
+                <!-- Welcome Banner -->
+                <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900 to-slate-900 p-8 text-white shadow-xl shadow-blue-900/10">
+                    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <h2 class="text-3xl font-bold mb-2">Welcome back, Admin! 👋</h2>
+                            <p class="text-blue-100 text-sm md:text-base opacity-90 max-w-lg">
+                                <span id="stat-pending-banner">Checking bookings...</span>
+                            </p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="showSection('bookings')" class="px-5 py-3 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition shadow-lg">Review Bookings</button>
+                        </div>
+                    </div>
+                    <!-- Decorative Circles -->
+                    <div class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-500/20 blur-3xl"></div>
+                    <div class="absolute bottom-0 left-10 w-40 h-40 rounded-full bg-indigo-500/20 blur-2xl"></div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Stat Card 1 -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft hover:shadow-lg transition-all duration-300 group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <i class="fas fa-wallet text-xl"></i>
+                            </div>
+                            <span class="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold uppercase rounded-md">+12%</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">₹<span id="stat-revenue">0</span></h3>
+                        <p class="text-sm font-medium text-slate-400">Total Revenue</p>
+                    </div>
+                    
+                    <!-- Stat Card 2 -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft hover:shadow-lg transition-all duration-300 group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                <i class="fas fa-calendar-check text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900" id="stat-bookings">0</h3>
+                        <p class="text-sm font-medium text-slate-400">Total Bookings</p>
+                    </div>
+
+                    <!-- Stat Card 3 -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft hover:shadow-lg transition-all duration-300 group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                <i class="fas fa-hotel text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900" id="stat-halls">0</h3>
+                        <p class="text-sm font-medium text-slate-400">Active Venues</p>
+                    </div>
+
+                    <!-- Stat Card 4 -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft hover:shadow-lg transition-all duration-300 group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                            <span class="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold uppercase rounded-md">+5</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900" id="stat-users">0</h3>
+                        <p class="text-sm font-medium text-slate-400">Total Customers</p>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Table -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
+                    <div class="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                        <h3 class="text-lg font-bold text-slate-800">Recent Bookings</h3>
+                        <a href="#" onclick="showSection('bookings')" class="text-sm font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wide">View All</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/80 text-slate-400 text-xs uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-8 py-4">Customer</th>
+                                    <th class="px-8 py-4">Venue</th>
+                                    <th class="px-8 py-4">Date</th>
+                                    <th class="px-8 py-4">Status</th>
+                                    <th class="px-8 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentBookingsList" class="divide-y divide-slate-50 text-sm font-medium"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: VENUES (Updated) -->
+            <div id="halls" class="section hidden space-y-8 animate-fade-in-up">
+                <!-- Header -->
+                <div class="bg-white p-6 flex justify-between items-center rounded-2xl border border-slate-100 shadow-soft">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Venue Listings</h2>
+                        <p class="text-sm text-slate-500 font-medium">Add, edit, or remove event spaces.</p>
+                    </div>
+                    <button onclick="showAddHallModal()" class="group bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition"><i class="fas fa-plus text-xs"></i></span>
+                        Add New Venue
+                    </button>
+                </div>
+
+                <!-- Grid -->
+                <div id="hallsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+
+            <!-- SECTION: BOOKINGS -->
+            <div id="bookings" class="section hidden space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-soft p-1">
+                    <div class="p-4 border-b border-slate-50 flex gap-4 items-center justify-between">
+                         <div class="relative w-72">
+                            <i class="fas fa-search absolute left-4 top-3 text-slate-400"></i>
+                            <input type="text" id="bookingSearch" placeholder="Filter bookings..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-100 transition font-medium">
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-100"><i class="fas fa-filter mr-2"></i>Filter</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/80 text-slate-400 text-xs uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-6 py-4">Customer</th>
+                                    <th class="px-6 py-4">Contact</th>
+                                    <th class="px-6 py-4">Venue</th>
+                                    <th class="px-6 py-4">Date</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allBookingsList" class="divide-y divide-slate-50 text-sm font-medium"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECTION: GALLERY -->
+            <div id="gallery" class="section hidden space-y-6">
+                <div class="bg-white rounded-2xl p-10 text-center border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50/30 transition cursor-pointer group" id="galleryDropZone">
+                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                        <i class="fas fa-cloud-upload-alt text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Upload Media</h3>
+                    <p class="text-slate-500 text-sm mt-1">Drag & drop photos here or click to browse</p>
+                    <input type="file" id="galleryUploadInput" class="hidden" multiple accept="image/*">
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" id="galleryGrid"></div>
+            </div>
+
+            <!-- SECTION: USERS -->
+            <div id="users" class="section hidden space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50/80 text-slate-400 text-xs uppercase font-bold tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">User</th>
+                                <th class="px-6 py-4">Email</th>
+                                <th class="px-6 py-4">Phone</th>
+                                <th class="px-6 py-4">Role</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersList" class="divide-y divide-slate-50 text-sm font-medium"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL: ADD/EDIT HALL -->
+    <div id="hallModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal('hallModal')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-lg border border-slate-100">
+                    
+                    <!-- Modal Header -->
+                    <div class="bg-gradient-to-r from-blue-900 to-slate-900 p-8 text-white relative overflow-hidden">
+                        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-blue-500/20 blur-2xl"></div>
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <h3 class="text-2xl font-bold tracking-tight mb-1" id="modal-title-hall">Venue Details</h3>
+                                <p class="text-blue-200 text-sm font-medium">Update venue information below.</p>
+                            </div>
+                            <button onclick="closeModal('hallModal')" class="bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition backdrop-blur-md">
+                                <i class="fas fa-times text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white px-8 py-8">
+                        <form id="addHallForm" class="space-y-6">
+                            <input type="hidden" id="hallId"> <!-- Hidden ID for Editing -->
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Venue Name</label>
+                                <input type="text" id="hallName" required class="w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 transition p-3.5 text-sm font-bold text-slate-800 placeholder-slate-400" placeholder="e.g. Royal Grand Hall">
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Capacity</label>
+                                    <div class="relative">
+                                        <i class="fas fa-users absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                                        <input type="text" id="hallCapacity" required placeholder="500 Guests" class="pl-10 w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 transition p-3.5 text-sm font-bold text-slate-800">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Price (₹)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3.5 top-3.5 text-slate-400 font-bold text-sm">₹</span>
+                                        <input type="number" id="hallPrice" required class="pl-8 w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 transition p-3.5 text-sm font-bold text-slate-800">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Cover Image</label>
+                                
+                                <!-- Upload Area -->
+                                <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 border-dashed hover:border-blue-300 transition group cursor-pointer" onclick="document.getElementById('hallImageUpload').click()">
+                                    <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-700" id="uploadText">Click to Upload Image</p>
+                                        <p class="text-[10px] text-slate-400" id="uploadStatus">Supports JPG, PNG</p>
+                                    </div>
+                                    <input type="file" id="hallImageUpload" accept="image/*" class="hidden">
+                                </div>
+                                <input type="hidden" id="hallImageUrl">
+                                
+                                <!-- Image Preview & Actions -->
+                                <div id="previewContainer" class="hidden mt-4 relative group">
+                                    <img id="imagePreview" src="" class="w-full h-48 object-cover rounded-2xl border border-slate-200 shadow-sm">
+                                    
+                                    <!-- Overlay Actions -->
+                                    <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 rounded-2xl backdrop-blur-sm">
+                                        <button type="button" onclick="document.getElementById('hallImageUpload').click()" class="px-4 py-2 bg-white text-blue-600 rounded-lg font-bold text-xs shadow-lg hover:bg-blue-50 transition">
+                                            <i class="fas fa-sync-alt mr-1"></i> Change
+                                        </button>
+                                        <button type="button" onclick="removeVenueImage()" class="px-4 py-2 bg-white text-red-500 rounded-lg font-bold text-xs shadow-lg hover:bg-red-50 transition">
+                                            <i class="fas fa-trash mr-1"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Description</label>
+                                <textarea id="hallDesc" rows="3" class="w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 transition p-3.5 text-sm font-medium placeholder-slate-400" placeholder="Describe amenities..."></textarea>
+                            </div>
+                            
+                            <div class="pt-4 flex gap-3">
+                                <button type="button" onclick="closeModal('hallModal')" class="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition">Cancel</button>
+                                <button type="submit" id="btnSubmitHall" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/30 uppercase tracking-wide">Publish Venue</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: BOOKING DETAILS -->
+    <div id="bookingModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal('bookingModal')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md border border-slate-100">
+                    
+                    <!-- Modal Header -->
+                    <div class="bg-gradient-to-r from-blue-900 to-slate-900 p-8 text-white relative overflow-hidden">
+                        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-blue-500/20 blur-2xl"></div>
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <h3 class="text-2xl font-bold tracking-tight mb-1" id="modal-user-name">Loading...</h3>
+                                <p class="text-blue-200 text-sm font-medium flex items-center gap-2">
+                                    <i class="fas fa-phone-alt text-xs opacity-70"></i> <span id="modal-user-phone">...</span>
+                                </p>
+                            </div>
+                            <button onclick="closeModal('bookingModal')" class="bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition backdrop-blur-md">
+                                <i class="fas fa-times text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-8 space-y-6 bg-slate-50/50">
+                        
+                        <!-- Status Badge -->
+                        <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Status</span>
+                            <span id="modal-status" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 uppercase tracking-wide">PENDING</span>
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-blue-200 transition group">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <i class="fas fa-hotel text-sm"></i>
+                                </div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Venue</p>
+                                <p class="text-sm font-bold text-slate-800" id="modal-hall-name">...</p>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-indigo-200 transition group">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <i class="fas fa-calendar-alt text-sm"></i>
+                                </div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Event Date</p>
+                                <p class="text-sm font-bold text-slate-800" id="modal-date">...</p>
+                            </div>
+
+                             <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-emerald-200 transition group">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                    <i class="fas fa-users text-sm"></i>
+                                </div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Guest Count</p>
+                                <p class="text-sm font-bold text-slate-800" id="modal-guests">...</p>
+                            </div>
+                            
+                             <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-amber-200 transition group">
+                                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                                    <i class="fas fa-hashtag text-sm"></i>
+                                </div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Booking ID</p>
+                                <p class="text-sm font-bold text-slate-800 font-mono" id="modal-booking-id">...</p>
+                            </div>
+                        </div>
+
+                        <!-- Communication Actions -->
+                        <div class="flex gap-3 pt-2">
+                            <a href="#" id="btn-whatsapp" target="_blank" class="flex-1 flex items-center justify-center gap-2 py-3 bg-green-50 text-green-700 rounded-xl font-bold text-sm hover:bg-green-100 transition border border-green-200">
+                                <i class="fab fa-whatsapp text-lg"></i> WhatsApp
+                            </a>
+                            <a href="#" id="btn-call" class="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-50 text-blue-700 rounded-xl font-bold text-sm hover:bg-blue-100 transition border border-blue-200">
+                                <i class="fas fa-phone-alt text-sm"></i> Call Now
+                            </a>
+                        </div>
+                        
+                        <div class="h-px bg-slate-200 w-full my-4"></div>
+
+                        <!-- Admin Actions -->
+                        <div id="modal-actions" class="flex gap-3">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="dashboard.js"></script>
+
+</body>
+</html>

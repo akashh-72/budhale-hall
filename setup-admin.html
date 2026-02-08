@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Admin - Budhale Hall</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; max-width: 500px; margin: 0 auto; }
+        input { display: block; width: 100%; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #1E3A8A; color: white; border: none; cursor: pointer; }
+        .success { color: green; display: none; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <h2>🚀 Create Initial Admin Account</h2>
+    <p>Use this tool to create the first admin user for the system.</p>
+    
+    <input type="email" id="email" value="admin@budhale.com" placeholder="Email">
+    <input type="text" id="password" value="admin123" placeholder="Password">
+    <button onclick="createAdmin()">Create Admin User</button>
+    
+    <div id="msg" class="success">✅ Admin created successfully! You can now delete this file and login.</div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <script>
+        function createAdmin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if(!email || !password) return alert("Enter email and password");
+
+            // Push new admin to 'admins' node
+            firebase.database().ref('admins').push({
+                email: email,
+                password: password,
+                role: 'super_admin',
+                createdAt: Date.now()
+            })
+            .then(() => {
+                document.getElementById('msg').style.display = 'block';
+                setTimeout(() => window.location.href = 'index.html', 2000);
+            })
+            .catch(err => alert("Error: " + err.message));
+        }
+    </script>
+</body>
+</html>
