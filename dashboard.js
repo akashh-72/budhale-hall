@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- STATS LOGIC ---
     window.updateStats = function(bookings, users, halls) {
+        // Calculate Revenue
         const revenue = bookings.filter(b => b.status === 'Confirmed').length * 50000;
         
         const revEl = document.getElementById("stat-revenue");
@@ -88,7 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if(form) form.reset();
         
         const previewCont = document.getElementById('previewContainer');
-        if(previewCont) previewCont.classList.add('hidden');
+        if(previewCont) {
+            previewCont.innerHTML = "";
+            previewCont.classList.add('hidden');
+        }
+        
+        document.getElementById('hallImageUrls').value = "[]"; 
         
         const btn = document.getElementById('btnSubmitHall');
         if(btn) btn.innerText = "Publish Venue";
@@ -110,67 +116,97 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('hallName').value = h.name;
             document.getElementById('hallCapacity').value = h.capacity;
             document.getElementById('hallPrice').value = h.price;
+            document.getElementById('hallSize').value = h.size || "";
+            document.getElementById('hallParking').value = h.parking || "";
+            document.getElementById('hallAmenities').value = h.amenities || "";
             document.getElementById('hallDesc').value = h.description || "";
-            document.getElementById('hallImageUrl').value = h.imageUrl || "";
-
-            // Show Preview
-            const preview = document.getElementById('imagePreview');
-            const previewCont = document.getElementById('previewContainer');
             
-            if(h.imageUrl) {
-                preview.src = h.imageUrl;
-                previewCont.classList.remove('hidden');
-            } else {
-                previewCont.classList.add('hidden');
+            // Handle Images (Legacy support for single imageUrl, new array imageUrls)
+            let images = [];
+            if(h.imageUrls && Array.isArray(h.imageUrls)) {
+                images = h.imageUrls;
+            } else if (h.imageUrl) {
+                images = [h.imageUrl];
             }
+            
+            document.getElementById('hallImageUrls').value = JSON.stringify(images);
+            renderImagePreviews(images);
 
             document.getElementById('btnSubmitHall').innerText = "Update Venue";
             openModal('hallModal');
         });
     };
 
-    // Remove Image Helper
-    window.removeVenueImage = function() {
-        document.getElementById('hallImageUrl').value = "";
-        document.getElementById('previewContainer').classList.add('hidden');
-        document.getElementById('imagePreview').src = "";
-        document.getElementById('uploadStatus').innerText = "Image Removed. Upload new one?";
+    // Helper to render image grid
+    function renderImagePreviews(images) {
+        const container = document.getElementById('previewContainer');
+        if (!container) return;
+        container.innerHTML = "";
+        
+        if(images.length > 0) {
+            container.classList.remove('hidden');
+            images.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = "relative group aspect-square rounded-lg overflow-hidden border border-slate-200";
+                div.innerHTML = `
+                    <img src="${url}" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeImageAtIndex(${index})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm cursor-pointer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    // Remove specific image
+    window.removeImageAtIndex = function(index) {
+        let images = JSON.parse(document.getElementById('hallImageUrls').value || "[]");
+        images.splice(index, 1);
+        document.getElementById('hallImageUrls').value = JSON.stringify(images);
+        renderImagePreviews(images);
     };
 
-    // ImgBB Upload
+    // ImgBB Upload (Multiple)
     const hallUpload = document.getElementById('hallImageUpload');
     if(hallUpload) {
         hallUpload.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
+            const files = Array.from(e.target.files);
+            if(files.length === 0) return;
             
             const status = document.getElementById('uploadStatus');
-            const preview = document.getElementById('imagePreview');
-            const previewCont = document.getElementById('previewContainer');
             const submitBtn = document.getElementById('btnSubmitHall');
             
-            if(status) status.innerText = "Uploading...";
+            if(status) status.innerText = `Uploading ${files.length} images...`;
             if(submitBtn) submitBtn.disabled = true;
 
-            const formData = new FormData();
-            formData.append('image', file);
-            
+            let currentImages = JSON.parse(document.getElementById('hallImageUrls').value || "[]");
+
             try {
-                const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData });
-                const data = await res.json();
-                if(data.success) {
-                    document.getElementById('hallImageUrl').value = data.data.url;
-                    if(preview) {
-                        preview.src = data.data.url;
-                        previewCont.classList.remove('hidden');
+                for (const file of files) {
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData });
+                    const data = await res.json();
+                    
+                    if(data.success) {
+                        currentImages.push(data.data.url);
                     }
-                    if(status) status.innerText = "Upload Complete";
                 }
+                
+                document.getElementById('hallImageUrls').value = JSON.stringify(currentImages);
+                renderImagePreviews(currentImages);
+                if(status) status.innerText = "Upload Complete";
+                
             } catch(err) {
-                alert('Upload Failed');
+                alert('Upload Failed for some images');
                 if(status) status.innerText = "Failed";
             } finally {
                 if(submitBtn) submitBtn.disabled = false;
+                // Clear input so same file can be selected again if needed
+                hallUpload.value = ""; 
             }
         });
     }
@@ -181,12 +217,18 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             const id = document.getElementById('hallId').value;
+            const images = JSON.parse(document.getElementById('hallImageUrls').value || "[]");
+            
             const hallData = {
                 name: document.getElementById('hallName').value,
                 capacity: document.getElementById('hallCapacity').value,
                 price: document.getElementById('hallPrice').value,
-                imageUrl: document.getElementById('hallImageUrl').value || "https://via.placeholder.com/400",
+                size: document.getElementById('hallSize').value,
+                parking: document.getElementById('hallParking').value,
+                amenities: document.getElementById('hallAmenities').value,
                 description: document.getElementById('hallDesc').value,
+                imageUrls: images,
+                imageUrl: images.length > 0 ? images[0] : "https://via.placeholder.com/400", // Backwards compatibility cover
                 updatedAt: Date.now()
             };
 
@@ -206,10 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    window.deleteHall = function(id) { 
-        if(confirm('Are you sure you want to delete this venue?')) db.ref('halls/'+id).remove(); 
-    };
 
     // Load Halls
     db.ref('halls').on('value', snap => {
@@ -260,6 +298,10 @@ document.addEventListener('DOMContentLoaded', () => {
         loadBookings(halls);
     });
 
+    window.deleteHall = function(id) { 
+        if(confirm('Are you sure you want to delete this venue?')) db.ref('halls/'+id).remove(); 
+    };
+
     // --- BOOKINGS MANAGER ---
     const bookingsList = document.getElementById('allBookingsList');
     const recentList = document.getElementById('recentBookingsList');
@@ -267,7 +309,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadBookings(halls) {
         db.ref('bookings').on('value', snap => {
             const bookings = [];
-            snap.forEach(c => bookings.push({id: c.key, ...c.val()}));
+            snap.forEach(c => {
+                const val = c.val();
+                // Fallback for missing fields to prevent JS errors
+                bookings.push({
+                    id: c.key,
+                    userName: val.userName || val.customerName || 'Guest',
+                    phone: val.phone || val.customerPhone || '-',
+                    hallName: val.hallName || 'Unknown Venue',
+                    date: val.date || '-',
+                    status: val.status || 'Pending',
+                    guestCount: val.guestCount || 0,
+                    createdAt: val.createdAt || 0
+                });
+            });
             
             bookings.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
             
